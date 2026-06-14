@@ -3,6 +3,103 @@
     "name": "BudgetApp"
   },
   "common": {
-    "loading": "جارٍ التحميل…"
+    "loading": "جارٍ التحميل…",
+    "save": "حفظ",
+    "next": "التالي",
+    "back": "رجوع",
+    "cancel": "إلغاء",
+    "done": "تم",
+    "add": "إضافة",
+    "remove": "حذف",
+    "edit": "تعديل",
+    "skip": "تخطٍّ",
+    "currency": "د.إ",
+    "perDay": "يوميًا",
+    "amount": "المبلغ"
+  },
+  "onboarding": {
+    "salary": {
+      "title": "الراتب الشهري",
+      "subtitle": "المبلغ الذي تتقاضاه في كل دورة، قبل الإنفاق.",
+      "placeholder": "٠",
+      "hint": "أدخل المبلغ الذي يصل إلى حسابك."
+    },
+    "fixed": {
+      "title": "المصروفات الثابتة الشهرية",
+      "subtitle": "الإيجار والقروض والفواتير وغيرها من المبالغ المتكررة.",
+      "addLabel": "إضافة مصروف ثابت",
+      "namePlaceholder": "الاسم",
+      "amountPlaceholder": "٠",
+      "typeLabel": "النوع",
+      "cycleLabel": "التكرار",
+      "empty": "لم تُضَف أي مصروفات ثابتة بعد.",
+      "hint": "يُوزَّع كل مصروف بالتساوي على مدار الدورة."
+    },
+    "payday": {
+      "title": "يوم الراتب",
+      "subtitle": "اليوم من الشهر الذي يصل فيه راتبك.",
+      "dayLabel": "اليوم من الشهر",
+      "hint": "يُستخدَم لحساب الأيام حتى راتبك القادم."
+    },
+    "cycle": {
+      "weekly": "أسبوعي",
+      "monthly": "شهري",
+      "quarterly": "ربع سنوي",
+      "yearly": "سنوي"
+    }
+  },
+  "home": {
+    "safeCaption": "المبلغ الآمن للإنفاق اليوم",
+    "survivalCaption": "أنفق بحذر اليوم",
+    "daysLeft": "الأيام حتى الراتب: {{count}}",
+    "cycleRange": "{{start}} – {{end}}",
+    "remainingLabel": "المتبقي في هذه الدورة",
+    "spentLabel": "المُنفَق في هذه الدورة",
+    "disposableLabel": "المتاح في هذه الدورة",
+    "logExpense": "تسجيل مصروف"
+  },
+  "survival": {
+    "bannerTitle": "وضع التقشّف",
+    "bannerBody": "حدّك اليومي أقل من العتبة التي حدّدتها لما تبقّى من هذه الدورة.",
+    "limitLabel": "الحد اليومي المُشدَّد",
+    "thresholdLabel": "العتبة التي حدّدتها",
+    "daysLeftNote": "الأيام المتبقية حتى الراتب: {{count}}"
+  },
+  "log": {
+    "title": "تسجيل مصروف",
+    "amountLabel": "المبلغ",
+    "amountPlaceholder": "٠",
+    "categoryLabel": "الفئة",
+    "noteLabel": "ملاحظة",
+    "notePlaceholder": "اختياري",
+    "save": "حفظ المصروف",
+    "savedToast": "تم حفظ المصروف",
+    "empty": "لم تُسجَّل أي مصروفات في هذه الدورة."
+  },
+  "categories": {
+    "food": "طعام",
+    "transport": "مواصلات",
+    "bills": "فواتير",
+    "shopping": "تسوّق",
+    "health": "صحة",
+    "family": "عائلة",
+    "other": "أخرى",
+    "fixed": {
+      "rent": "إيجار",
+      "loan": "قرض",
+      "remittance": "تحويل",
+      "bill": "فاتورة",
+      "other": "أخرى"
+    }
+  },
+  "errors": {
+    "required": "هذا الحقل مطلوب.",
+    "amountInvalid": "أدخل مبلغًا صحيحًا.",
+    "amountTooLow": "يجب أن يكون المبلغ أكبر من صفر.",
+    "salaryInvalid": "أدخل راتبك الشهري.",
+    "payDayInvalid": "أدخل يومًا بين ١ و٣١.",
+    "nameRequired": "أدخل اسمًا.",
+    "noData": "لا يوجد ما يُعرَض بعد.",
+    "generic": "حدث خطأ. يُرجى المحاولة مرة أخرى."
   }
 }

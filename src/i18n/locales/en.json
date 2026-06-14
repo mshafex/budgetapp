@@ -3,6 +3,103 @@
     "name": "BudgetApp"
   },
   "common": {
-    "loading": "Loading…"
+    "loading": "Loading…",
+    "save": "Save",
+    "next": "Next",
+    "back": "Back",
+    "cancel": "Cancel",
+    "done": "Done",
+    "add": "Add",
+    "remove": "Remove",
+    "edit": "Edit",
+    "skip": "Skip",
+    "currency": "AED",
+    "perDay": "per day",
+    "amount": "Amount"
+  },
+  "onboarding": {
+    "salary": {
+      "title": "Monthly salary",
+      "subtitle": "The amount you are paid each cycle, before spending.",
+      "placeholder": "0",
+      "hint": "Enter the figure that lands in your account."
+    },
+    "fixed": {
+      "title": "Fixed monthly costs",
+      "subtitle": "Rent, loans, bills and other recurring amounts.",
+      "addLabel": "Add a fixed cost",
+      "namePlaceholder": "Name",
+      "amountPlaceholder": "0",
+      "typeLabel": "Type",
+      "cycleLabel": "Repeats",
+      "empty": "No fixed costs added yet.",
+      "hint": "Each cost is spread evenly across the cycle."
+    },
+    "payday": {
+      "title": "Pay day",
+      "subtitle": "The day of the month your salary arrives.",
+      "dayLabel": "Day of month",
+      "hint": "Used to count the days until your next pay."
+    },
+    "cycle": {
+      "weekly": "Weekly",
+      "monthly": "Monthly",
+      "quarterly": "Quarterly",
+      "yearly": "Yearly"
+    }
+  },
+  "home": {
+    "safeCaption": "Safe to spend today",
+    "survivalCaption": "Spend with care today",
+    "daysLeft": "Days until pay: {{count}}",
+    "cycleRange": "{{start}} – {{end}}",
+    "remainingLabel": "Remaining this cycle",
+    "spentLabel": "Spent this cycle",
+    "disposableLabel": "Available this cycle",
+    "logExpense": "Log an expense"
+  },
+  "survival": {
+    "bannerTitle": "Survival mode",
+    "bannerBody": "Your daily allowance is below your threshold for the rest of this cycle.",
+    "limitLabel": "Tightened daily limit",
+    "thresholdLabel": "Your threshold",
+    "daysLeftNote": "Days remaining until pay: {{count}}"
+  },
+  "log": {
+    "title": "Log an expense",
+    "amountLabel": "Amount",
+    "amountPlaceholder": "0",
+    "categoryLabel": "Category",
+    "noteLabel": "Note",
+    "notePlaceholder": "Optional",
+    "save": "Save expense",
+    "savedToast": "Expense saved",
+    "empty": "No expenses logged this cycle."
+  },
+  "categories": {
+    "food": "Food",
+    "transport": "Transport",
+    "bills": "Bills",
+    "shopping": "Shopping",
+    "health": "Health",
+    "family": "Family",
+    "other": "Other",
+    "fixed": {
+      "rent": "Rent",
+      "loan": "Loan",
+      "remittance": "Remittance",
+      "bill": "Bill",
+      "other": "Other"
+    }
+  },
+  "errors": {
+    "required": "This field is required.",
+    "amountInvalid": "Enter a valid amount.",
+    "amountTooLow": "Amount must be greater than zero.",
+    "salaryInvalid": "Enter your monthly salary.",
+    "payDayInvalid": "Enter a day between 1 and 31.",
+    "nameRequired": "Enter a name.",
+    "noData": "Nothing to show yet.",
+    "generic": "Something went wrong. Please try again."
   }
 }
