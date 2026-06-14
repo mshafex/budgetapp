@@ -3,6 +3,8 @@ import i18n from 'i18next';
 import { I18nManager } from 'react-native';
 import { initReactI18next } from 'react-i18next';
 
+import { type AppLocale, isRTL } from '@/contracts/i18n';
+
 import ar from './locales/ar.json';
 import en from './locales/en.json';
 
@@ -10,12 +12,6 @@ export const resources = {
   en: { translation: en },
   ar: { translation: ar },
 } as const;
-
-export type AppLocale = keyof typeof resources;
-
-export function isRTL(locale: AppLocale): boolean {
-  return locale === 'ar';
-}
 
 const deviceLanguage = getLocales()[0]?.languageCode ?? 'en';
 const initialLocale: AppLocale = deviceLanguage === 'ar' ? 'ar' : 'en';
@@ -35,3 +31,4 @@ if (!i18n.isInitialized) {
 }
 
 export default i18n;
+export type { AppLocale };
