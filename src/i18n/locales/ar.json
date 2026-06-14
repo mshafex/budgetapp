@@ -1,0 +1,8 @@
+{
+  "app": {
+    "name": "BudgetApp"
+  },
+  "common": {
+    "loading": "جارٍ التحميل…"
+  }
+}
