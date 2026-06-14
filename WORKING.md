@@ -5,12 +5,14 @@
 ---
 
 ## Status
-🟢 Phase 3 complete — all screens merged to `main`. tsc clean, 213 jest tests pass, full app
-bundles. GATE 3 passed. Next: Phase 4 integration (e2e smoke, Arabic RTL pass, completion report).
+✅ MVP v1 complete — all 5 MVP items built, integrated, and verified. 218 jest tests green,
+tsc clean, full app bundles, integration smoke covers onboard→number→log→survival.
+Remaining before release is a manual on-device UI smoke (see `COMPLETION_REPORT.md`).
 
 ## Current focus
-Phase 4 — integration & polish (lead, serial): end-to-end smoke (onboard → number → log →
-trip survival), full Arabic RTL pass, final typecheck/test run, COMPLETION_REPORT.md.
+MVP v1 done. Before release: manual on-device smoke (`npx expo run:ios`/Expo Go — onboard,
+confirm the number, log spending, confirm survival recolour + banner, check Arabic RTL),
+then pick the final app name + icons. Full status + gaps in `COMPLETION_REPORT.md`.
 
 ## Task checklist
 
@@ -69,3 +71,4 @@ trip survival), full Arabic RTL pass, final typecheck/test run, COMPLETION_REPOR
 - 2026-06-14 — Phase 0 bootstrap. Scaffolded Expo SDK 56 (Router/TS), added Drizzle+expo-sqlite, i18next+react-i18next+expo-localization (+RTL), Jest. Renamed app → budgetapp, reset example to minimal `src/app`. Verified `tsc`, `jest`, and metro ios export all green. Committed (`ed531ab`, tag `gate-0`), local only. Next: GATE 0 review → resolve `gh` auth → Phase 1 contracts → Phase 2 worktree fan-out.
 - 2026-06-14 — GATE 0 review passed; chose worktree+PR model + public GitHub repo on `github-mshafex`. Repo: https://github.com/mshafex/budgetapp (public). Phase 1 contracts frozen (`gate-1`, `99a7ae0`). Phase 2: 3 parallel worktree workers → PRs #1 (data), #2 (engine), #3 (design), all squash-merged to `main` (`e947c25`, tag `gate-2`). Integrated `tsc` clean + 154 jest tests pass. Next: Phase 3 screens fan-out, then Phase 4 integration.
 - 2026-06-14 — Phase 3: lead seeded route skeleton (`6481429`), then 3 worktree workers → PRs #4 (log), #5 (home), #6 (onboarding). Onboarding worker stalled post-review; lead salvaged + fixed + shipped it. All merged to `main` (`ad95d2c`, tag `gate-3`). Integrated tsc clean, 213 jest tests pass, full app bundles. Next: Phase 4 integration smoke + Arabic RTL pass + COMPLETION_REPORT.
+- 2026-06-14 — Phase 4 (integration & polish): added headless e2e integration smoke (`src/__tests__/integration.smoke.test.ts`) wiring real onboarding→engine→Money→Home-view→log through safe→survival→overspend. Static RTL/i18n audit clean (no physical left/right in styles; en/ar key parity 77=77). Final: 218 tests green, tsc clean, app bundles. Wrote `COMPLETION_REPORT.md`. MVP v1 complete. Open: manual on-device UI smoke; final app name + icons; carryover rollover still deferred.
