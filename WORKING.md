@@ -5,14 +5,12 @@
 ---
 
 ## Status
-🟢 Phase 2 complete — core modules (money, engine, db, theme, components, locales) merged to
-`main`. tsc clean, 154 jest tests pass. GATE 2 passed. Next: Phase 3 screens.
+🟢 Phase 3 complete — all screens merged to `main`. tsc clean, 213 jest tests pass, full app
+bundles. GATE 3 passed. Next: Phase 4 integration (e2e smoke, Arabic RTL pass, completion report).
 
 ## Current focus
-Phase 3 — screens fan-out as parallel worktree PRs against frozen contracts + merged
-primitives: ONBOARDING (salary→fixed→payday), HOME (The Number + survival state),
-LOGGING (add expense ≤2 taps). Then Phase 4: wire `index`/`_layout` routing, e2e smoke,
-Arabic RTL pass, COMPLETION_REPORT.
+Phase 4 — integration & polish (lead, serial): end-to-end smoke (onboard → number → log →
+trip survival), full Arabic RTL pass, final typecheck/test run, COMPLETION_REPORT.md.
 
 ## Task checklist
 
@@ -29,11 +27,11 @@ Arabic RTL pass, COMPLETION_REPORT.
 - [x] Engine tests: past pay date rollover, days_left clamp, negative remaining, mid-cycle install, zero fixed expenses (94 tests)
 - [x] Theme tokens, AR+EN strings (77 keys ×2), shared UI primitives (DESIGN, PR #3)
 
-### Phase 3 — Screens
-- [ ] Onboarding (salary → fixed expenses → pay date)
-- [ ] Home / "The Number" (state-driven: safe vs survival, distinct colors)
-- [ ] Expense logging (≤2 taps)
-- [ ] Survival Mode state + warning UI
+### Phase 3 — Screens — DONE
+- [x] Onboarding (salary → fixed expenses → pay date) (PR #6)
+- [x] Home / "The Number" (state-driven: safe vs survival, distinct colors) (PR #5)
+- [x] Expense logging (≤2 taps) (PR #4)
+- [x] Survival Mode state + warning UI (part of Home, PR #5)
 
 ---
 
@@ -50,6 +48,8 @@ Arabic RTL pass, COMPLETION_REPORT.
 - 2026-06-14: Orchestration = worktree-per-unit + PR fan-out (user choice), applied PER PHASE with barriers (screens depend on contracts + primitives, so units are not all independent). Remote on `github-mshafex`, push approved.
 - 2026-06-14: i18n = i18next + react-i18next + expo-localization; RTL via `I18nManager.allowRTL/forceRTL` in `src/i18n`. Jest via `jest-expo` preset. `tsconfig` pins `types: ["jest","node"]` (Expo bundler base suppresses auto @types).
 - 2026-06-14 (GATE 2): Phase 2 merged via 3 squashed PRs. Worker decisions to remember: Money `round`/`fromAed` use half-away-from-zero; daily-allowance path uses `floor`. `ExpenseInput.note` is required (`string|null`) — callers pass `null` explicitly. expo-sqlite native I/O is NOT unit-tested in jest (node) — pure mappers are; real DB I/O verified at Phase 4. DESIGN palette: safe = teal `#3FB6A8`, survival = amber-red `#E5544B` (opposite hues, not brightness-dependent). `repository` is a factory (`createRepository(db)`) with a default instance exported from `@/db`.
+- 2026-06-14 (Phase 3 prep): disabled `experiments.typedRoutes` in app.json — brittle across isolated worktrees (routes on sibling branches fail typecheck); navigate via the frozen `ROUTES` string map. Lead seeded `src/app/index.tsx` (initial routing via `getUser()`) + placeholder route files; screen owners replaced their own.
+- 2026-06-14 (GATE 3): screens merged via PRs #4 (log), #5 (home), #6 (onboarding). Survival threshold v1 default = 2000 fils (20 AED/day), set in onboarding (`DEFAULT_SURVIVAL_THRESHOLD_MINOR`); not user-editable in v1. Onboarding worker stopped after code-review without committing — lead salvaged its worktree, applied its 4 findings, and shipped PR #6. Hardened `jest.config.js` with `roots: ['<rootDir>/src']` (transient worktrees under `.claude/` were being glob-matched into the run). `log.savedToast` i18n key currently unused (no toast dep in v1).
 
 ## Deferred (do NOT build — parking lot)
 - Bank sync / auto-import (needs Open Finance / licensed TPP — much later phase)
@@ -68,3 +68,4 @@ Arabic RTL pass, COMPLETION_REPORT.
 *(Append one entry per session: date — what changed — what's next.)*
 - 2026-06-14 — Phase 0 bootstrap. Scaffolded Expo SDK 56 (Router/TS), added Drizzle+expo-sqlite, i18next+react-i18next+expo-localization (+RTL), Jest. Renamed app → budgetapp, reset example to minimal `src/app`. Verified `tsc`, `jest`, and metro ios export all green. Committed (`ed531ab`, tag `gate-0`), local only. Next: GATE 0 review → resolve `gh` auth → Phase 1 contracts → Phase 2 worktree fan-out.
 - 2026-06-14 — GATE 0 review passed; chose worktree+PR model + public GitHub repo on `github-mshafex`. Repo: https://github.com/mshafex/budgetapp (public). Phase 1 contracts frozen (`gate-1`, `99a7ae0`). Phase 2: 3 parallel worktree workers → PRs #1 (data), #2 (engine), #3 (design), all squash-merged to `main` (`e947c25`, tag `gate-2`). Integrated `tsc` clean + 154 jest tests pass. Next: Phase 3 screens fan-out, then Phase 4 integration.
+- 2026-06-14 — Phase 3: lead seeded route skeleton (`6481429`), then 3 worktree workers → PRs #4 (log), #5 (home), #6 (onboarding). Onboarding worker stalled post-review; lead salvaged + fixed + shipped it. All merged to `main` (`ad95d2c`, tag `gate-3`). Integrated tsc clean, 213 jest tests pass, full app bundles. Next: Phase 4 integration smoke + Arabic RTL pass + COMPLETION_REPORT.
