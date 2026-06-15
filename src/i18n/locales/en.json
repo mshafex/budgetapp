@@ -76,6 +76,21 @@
     "savedToast": "Expense saved",
     "empty": "No expenses logged this cycle."
   },
+  "capture": {
+    "title": "Read a bank alert",
+    "subtitle": "Paste a bank SMS or payment alert. Nothing is saved until you confirm it.",
+    "pastePlaceholder": "Paste the message here",
+    "read": "Read",
+    "review": "Check these details",
+    "amountLabel": "Amount",
+    "categoryLabel": "Category",
+    "merchant": "Merchant",
+    "merchantPlaceholder": "Where you spent",
+    "date": "Date",
+    "confirm": "Confirm expense",
+    "couldntRead": "Couldn't read that message. You can enter the expense yourself.",
+    "enterManually": "Enter it manually"
+  },
   "categories": {
     "food": "Food",
     "transport": "Transport",
