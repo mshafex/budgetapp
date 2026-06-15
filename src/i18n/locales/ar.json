@@ -76,6 +76,21 @@
     "savedToast": "تم حفظ المصروف",
     "empty": "لم تُسجَّل أي مصروفات في هذه الدورة."
   },
+  "capture": {
+    "title": "قراءة تنبيه بنكي",
+    "subtitle": "الصق رسالة بنكية أو تنبيه دفع. لا يُحفَظ شيء حتى تؤكده.",
+    "pastePlaceholder": "الصق الرسالة هنا",
+    "read": "قراءة",
+    "review": "تحقّق من هذه التفاصيل",
+    "amountLabel": "المبلغ",
+    "categoryLabel": "الفئة",
+    "merchant": "المتجر",
+    "merchantPlaceholder": "أين أنفقت",
+    "date": "التاريخ",
+    "confirm": "تأكيد المصروف",
+    "couldntRead": "تعذّرت قراءة تلك الرسالة. يمكنك إدخال المصروف بنفسك.",
+    "enterManually": "أدخله يدويًا"
+  },
   "categories": {
     "food": "طعام",
     "transport": "مواصلات",
