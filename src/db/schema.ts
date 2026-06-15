@@ -15,6 +15,7 @@ import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core';
 import type {
   CycleKind,
   ExpenseCategory,
+  ExpenseSource,
   FixedItemType,
 } from '@/contracts';
 
@@ -68,7 +69,18 @@ export const fixedItemTable = sqliteTable('fixed_item', {
   amountMinor: integer('amount_minor', { mode: 'number' }).notNull(),
   type: text('type', { enum: FIXED_ITEM_TYPES }).notNull(),
   cycle: text('cycle', { enum: CYCLE_KINDS }).notNull(),
+  /**
+   * Day-of-month the item is due (1..31), used by the Bucket-1 auto-post scheduler.
+   * Nullable; absent ⇒ the scheduler defaults to day 1.
+   */
+  dueDay: integer('due_day', { mode: 'number' }),
 });
+
+const EXPENSE_SOURCES = [
+  'manual',
+  'recurring',
+  'captured',
+] as const satisfies readonly ExpenseSource[];
 
 export const expenseTable = sqliteTable('expense', {
   id: integer('id', { mode: 'number' }).primaryKey({ autoIncrement: true }),
@@ -76,6 +88,17 @@ export const expenseTable = sqliteTable('expense', {
   category: text('category', { enum: EXPENSE_CATEGORIES }).notNull(),
   /** Optional free-text note. */
   note: text('note'),
+  /**
+   * How this expense entered the ledger (Model A). Defaults to 'manual'. The budget spend
+   * sum EXCLUDES 'recurring' (amortized fixed items auto-posted as records — R8) and
+   * INCLUDES 'manual' / 'captured'.
+   */
+  source: text('source', { enum: EXPENSE_SOURCES }).notNull().default('manual'),
+  /**
+   * Idempotency key for auto-posted recurring items (`${fixedItemId}:${dueDateISO}`).
+   * Nullable; null for manual/captured expenses.
+   */
+  recurringKey: text('recurring_key'),
   /** ISO 8601 timestamp. */
   createdAt: text('created_at').notNull(),
 });

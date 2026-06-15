@@ -205,3 +205,12 @@ export const computeBudget: ComputeBudget = (input: BudgetInput): BudgetResult =
     cycleEnd,
   };
 };
+
+// Recurring auto-post scheduler (Bucket 1) — pure, lives in `./recurring`. Re-exported here
+// so callers reach the whole engine surface through `@/engine`. `computeBudget` /
+// `resolveCycle` above are unchanged (Model A keeps recurring items amortized).
+export {
+  computeDuePostings,
+  makeRecurringKey,
+  categoryForFixedItemType,
+} from './recurring';
