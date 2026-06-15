@@ -7,7 +7,8 @@
 ## Status
 ✅ MVP v1 complete — all 5 MVP items built, integrated, and verified. 218 jest tests green,
 tsc clean, full app bundles, integration smoke covers onboard→number→log→survival.
-Remaining before release is a manual on-device UI smoke (see `COMPLETION_REPORT.md`).
+Verified LIVE on iPhone 17 simulator (onboard → AED 188 safe → log → AED 12 survival, real
+SQLite). Remaining before release: a quick Arabic-RTL runtime pass (see `COMPLETION_REPORT.md`).
 
 ## Current focus
 MVP v1 done. Before release: manual on-device smoke (`npx expo run:ios`/Expo Go — onboard,
@@ -72,3 +73,4 @@ then pick the final app name + icons. Full status + gaps in `COMPLETION_REPORT.m
 - 2026-06-14 — GATE 0 review passed; chose worktree+PR model + public GitHub repo on `github-mshafex`. Repo: https://github.com/mshafex/budgetapp (public). Phase 1 contracts frozen (`gate-1`, `99a7ae0`). Phase 2: 3 parallel worktree workers → PRs #1 (data), #2 (engine), #3 (design), all squash-merged to `main` (`e947c25`, tag `gate-2`). Integrated `tsc` clean + 154 jest tests pass. Next: Phase 3 screens fan-out, then Phase 4 integration.
 - 2026-06-14 — Phase 3: lead seeded route skeleton (`6481429`), then 3 worktree workers → PRs #4 (log), #5 (home), #6 (onboarding). Onboarding worker stalled post-review; lead salvaged + fixed + shipped it. All merged to `main` (`ad95d2c`, tag `gate-3`). Integrated tsc clean, 213 jest tests pass, full app bundles. Next: Phase 4 integration smoke + Arabic RTL pass + COMPLETION_REPORT.
 - 2026-06-14 — Phase 4 (integration & polish): added headless e2e integration smoke (`src/__tests__/integration.smoke.test.ts`) wiring real onboarding→engine→Money→Home-view→log through safe→survival→overspend. Static RTL/i18n audit clean (no physical left/right in styles; en/ar key parity 77=77). Final: 218 tests green, tsc clean, app bundles. Wrote `COMPLETION_REPORT.md`. MVP v1 complete. Open: manual on-device UI smoke; final app name + icons; carryover rollover still deferred.
+- 2026-06-15 — Live on-device smoke (iPhone 17 simulator). Built natively via `expo run:ios` after fixing a CocoaPods crash (shell needs `LANG=en_US.UTF-8`). Drove the real UI: onboarding (salary 3,000 → pay day 1) → Home **AED 188 "Safe"** → logged **2,800** → Home recomputed to **AED 12 "Survival mode"** (red + banner, threshold AED 20). Real expo-sqlite persistence + recompute-on-focus confirmed; figures match the engine exactly. `expo prebuild` added `ios.bundleIdentifier` + run scripts (committed; `ios/` stays gitignored). Web export unsupported (expo-sqlite `wa-sqlite.wasm`). Remaining: Arabic-RTL runtime pass.

@@ -45,14 +45,24 @@ screens (`#4` log, `#5` home, `#6` onboarding). Tags `gate-0`…`gate-3`.
 - **Integration smoke** (`src/__tests__/integration.smoke.test.ts`) — wires the real
   onboarding → engine → Money → Home-view → log modules through the full journey:
   safe (7,142 fils/day) → log spending → survival trips (1,904) → overspend clamps to 0.
+- **Live device smoke (iPhone 17 simulator, iOS 26):** built + ran natively (`expo run:ios`),
+  then drove the real UI: onboarding (salary 3,000 → pay day 1) → Home shows **AED 188
+  "Safe to spend today"** → logged a **2,800** expense → Home recomputed to **AED 12
+  "Survival mode"** (red, with banner: tightened limit AED 12 vs threshold AED 20),
+  Remaining AED 200 / Spent AED 2,800. Real `expo-sqlite` persistence + recompute-on-focus
+  confirmed; on-screen figures match the engine exactly. Screenshots captured.
+  Build note: CocoaPods needs a UTF-8 locale (`LANG=en_US.UTF-8`) or `pod install` crashes.
 
 ## Known gaps / not verified in this environment
-- **On-device UI click-through was not run** (no confirmed iOS simulator/Xcode here; expo-sqlite
-  web support unverified). **Recommended manual smoke before release:** `npx expo run:ios`
-  (or Expo Go) → onboard → confirm the number → log expenses → confirm the survival recolour +
-  banner → toggle device language to Arabic and confirm RTL layout.
-- **Real SQLite I/O is not exercised under jest** (expo-sqlite native is unavailable in node);
-  the repository's pure mappers are tested, but actual persistence is the manual step above.
+- **English/LTR on-device flow is verified** (iPhone 17 simulator — see Live device smoke above).
+  Still worth a manual pass before release: **Arabic RTL at runtime** (set the simulator/device
+  language to Arabic and confirm the layout mirrors — only the static audit + an LTR run were done).
+- **Web is not supported as-is:** `expo export -p web` fails resolving `expo-sqlite`'s
+  `wa-sqlite/wa-sqlite.wasm` (needs Metro `.wasm` asset config + COOP/COEP for OPFS). Native is
+  the target; web would need that plumbing if ever wanted.
+- **Real SQLite I/O is exercised live** on the simulator smoke (persist on onboarding finish,
+  read + sum on Home). It is still not covered under jest (expo-sqlite native is unavailable in
+  node) — the repository's pure mappers are unit-tested instead.
 - **Carryover rollover is deferred** — the engine accepts `carryoverMinor` but v1 passes 0;
   no automatic leftover snapshot at the cycle boundary yet.
 - **App name is a placeholder** ("BudgetApp" / slug `budgetapp`) with template icons/splash.
