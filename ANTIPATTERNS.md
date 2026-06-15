@@ -8,10 +8,19 @@ Never do these. Each maps to a rule or a hard-won lesson.
 - ❌ Doing money arithmetic outside the `Money` helper.
 
 ## Scope
-- ❌ Building anything outside the five MVP items. Deferred features (bank sync,
-  debt optimizer, affiliate links, multi-currency conversion, AI advisor, social,
-  cloud sync, push notifications) go in `WORKING.md` — not in code. (R1)
+- ❌ Building anything outside MVP v1 + the sanctioned capture architecture (R1). Still-deferred
+  ideas (bank sync / Open Finance, debt optimizer, affiliate links, multi-currency conversion,
+  AI advisor, social, cloud sync) go in `WORKING.md` — not in code.
 - ❌ "While I was in here I also added…" — stop, log it, move on.
+
+## Transaction capture (R8)
+- ❌ Declaring `READ_SMS` / any SMS permission, or acting as the SMS handler.
+- ❌ Raw SMS / notification / email / receipt content leaving the device or being uploaded.
+  Only confirmed, structured fields are stored.
+- ❌ Silently adding a parsed transaction. Every candidate is confirmed/edited by the user first.
+- ❌ Trying to read SMS or other apps' notifications on iOS (impossible — don't attempt).
+- ❌ Platform / native code inside the pure parser. Parser is pure JS; native sits behind a TS interface.
+- ❌ Claiming a native capture feature works without real-device testing. Ship the stub + say what to test.
 
 ## Regulatory / copy
 - ❌ Telling the user what they "should" do with money. It's a calculator, not an

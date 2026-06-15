@@ -5,15 +5,16 @@
 ---
 
 ## Status
-✅ MVP v1 complete — all 5 MVP items built, integrated, and verified. 218 jest tests green,
-tsc clean, full app bundles, integration smoke covers onboard→number→log→survival.
-Verified LIVE on iPhone 17 simulator (onboard → AED 188 safe → log → AED 12 survival, real
-SQLite). Remaining before release: a quick Arabic-RTL runtime pass (see `COMPLETION_REPORT.md`).
+✅ MVP v1 complete (218 jest tests, tsc clean, verified live on iPhone 17 sim).
+🟡 Now building the **transaction-capture architecture** (three-bucket model, Android-first —
+see PATTERNS.md + RULES R8). At capture Phase C0 (EAS dev-build + Android config); pausing for
+review before feature work.
 
 ## Current focus
-MVP v1 done. Before release: manual on-device smoke (`npx expo run:ios`/Expo Go — onboard,
-confirm the number, log spending, confirm survival recolour + banner, check Arabic RTL),
-then pick the final app name + icons. Full status + gaps in `COMPLETION_REPORT.md`.
+Capture Phase C0 (serial, lead): add EAS dev-build config (`eas.json` + `expo-dev-client`) and
+the Android package id; verify tsc/jest still green; commit; PAUSE for review. Then C1 = the
+recurring auto-post scheduler (pure engine, tested). Carry-over from MVP: Arabic-RTL runtime
+pass + final app name/icons still open (see `COMPLETION_REPORT.md`).
 
 ## Task checklist
 
@@ -36,6 +37,16 @@ then pick the final app name + icons. Full status + gaps in `COMPLETION_REPORT.m
 - [x] Expense logging (≤2 taps) (PR #4)
 - [x] Survival Mode state + warning UI (part of Home, PR #5)
 
+### Capture architecture (v1.x) — three-bucket model (RULES R8, PATTERNS)
+*(Phase numbers mirror the prompt: phase 2 = core screens, already done above.)*
+- [ ] **C0** EAS dev-build config (`eas.json`, `expo-dev-client`) + Android package id — in progress; pause after
+- [ ] **C1** Bucket 1: recurring auto-post scheduler in the engine (pure) + tests (due-in-past / today / missed-periods / cycle-boundary, idempotent)
+- [ ] **C3** Bucket 2 core: pure transaction-parser + per-source templates + tests (NO platform code)
+- [ ] **C4** Bucket 2 feed 1: share-sheet / paste intake → parser → confirm flow (both platforms)
+- [ ] **C5** Bucket 2 feed 2: on-device OCR receipt scan → parser → confirm flow (ML Kit / Vision)
+- [ ] **C6** Bucket 2 feed 3: notification listener (Android-only, feature-flagged, LAST) → parser → confirm flow
+- [x] Bucket 3 baseline: manual quick-add ≤2 taps (done in MVP, PR #4)
+
 ---
 
 ## Decisions log
@@ -53,19 +64,24 @@ then pick the final app name + icons. Full status + gaps in `COMPLETION_REPORT.m
 - 2026-06-14 (GATE 2): Phase 2 merged via 3 squashed PRs. Worker decisions to remember: Money `round`/`fromAed` use half-away-from-zero; daily-allowance path uses `floor`. `ExpenseInput.note` is required (`string|null`) — callers pass `null` explicitly. expo-sqlite native I/O is NOT unit-tested in jest (node) — pure mappers are; real DB I/O verified at Phase 4. DESIGN palette: safe = teal `#3FB6A8`, survival = amber-red `#E5544B` (opposite hues, not brightness-dependent). `repository` is a factory (`createRepository(db)`) with a default instance exported from `@/db`.
 - 2026-06-14 (Phase 3 prep): disabled `experiments.typedRoutes` in app.json — brittle across isolated worktrees (routes on sibling branches fail typecheck); navigate via the frozen `ROUTES` string map. Lead seeded `src/app/index.tsx` (initial routing via `getUser()`) + placeholder route files; screen owners replaced their own.
 - 2026-06-14 (GATE 3): screens merged via PRs #4 (log), #5 (home), #6 (onboarding). Survival threshold v1 default = 2000 fils (20 AED/day), set in onboarding (`DEFAULT_SURVIVAL_THRESHOLD_MINOR`); not user-editable in v1. Onboarding worker stopped after code-review without committing — lead salvaged its worktree, applied its 4 findings, and shipped PR #6. Hardened `jest.config.js` with `roots: ['<rootDir>/src']` (transient worktrees under `.claude/` were being glob-matched into the run). `log.savedToast` i18n key currently unused (no toast dep in v1).
+- 2026-06-15 (capture architecture): scope EXTENDED (R1 amended) to the three-bucket capture model, **Android-first**. (1) ELIMINATE = recurring auto-post (pure engine scheduler); (2) AUTO-CAPTURE = pure parser → candidates → **confirm-don't-assume** → feeds in risk order (share-sheet → OCR → notification-listener last, Android-only, flagged); (3) MANUAL quick-add (done). Hard rules in R8: on-device only (raw content never leaves device), no `READ_SMS`, no bank connection, native behind a TS interface, no unverified native claims. Native pieces need an EAS dev build (not Expo Go) + real-device testing. Build phases: C0 EAS/Android → C1 recurring → C3 parser → C4 share-sheet → C5 OCR → C6 notif-listener.
 
 ## Deferred (do NOT build — parking lot)
-- Bank sync / auto-import (needs Open Finance / licensed TPP — much later phase)
+- Bank sync / Open Finance / account aggregation (licensed TPP) — explicitly NOT the capture
+  model; capture is on-device only (R8). Still out of scope.
 - Debt payoff optimizer (frame as calculator if/when built)
 - Affiliate / partner referrals (licensed remittance only, post-launch)
 - Multi-currency conversion engine
 - AI advisor / insights
-- Cloud sync, accounts/login, push notifications, social
+- Cloud sync, accounts/login, social, *sending* push notifications (the Android notification
+  *listener* for capture IS in scope per R8 — that's reading, not sending)
 
 ## Open questions
 - App name not chosen. Using placeholder slug `budgetapp` (app.json name "BudgetApp"); rename when final name picked.
 - Survival threshold: user-set vs sensible default? (default for v1, revisit.)
-- Remote/PRs: `gh` CLI not installed; needs auth as personal `mshafex` (device login or PAT) before repo creation + PR fan-out. SSH push as `mshafex` already verified working.
+- Remote/PRs: `gh` CLI not installed; needs auth as personal `mshafex` (device login or PAT) before repo creation + PR fan-out. SSH push as `mshafex` already verified working. (gh now installed + authed as mshafex; resolved.)
+- EAS dev build needs the user's Expo account (`eas login`) to run cloud builds. Phase C0 only writes config (`eas.json` + dev-client dep); actually building/installing a dev client on a device is the user's step.
+- Recurring auto-post (C1): does an auto-posted recurring item need user confirm, or only Bucket-2 *parsed* candidates? Assumption: recurring items were user-entered once → they auto-post WITHOUT re-confirm; only Bucket-2 captures use confirm-don't-assume. Flag for review.
 
 ## Session log
 *(Append one entry per session: date — what changed — what's next.)*
@@ -74,3 +90,4 @@ then pick the final app name + icons. Full status + gaps in `COMPLETION_REPORT.m
 - 2026-06-14 — Phase 3: lead seeded route skeleton (`6481429`), then 3 worktree workers → PRs #4 (log), #5 (home), #6 (onboarding). Onboarding worker stalled post-review; lead salvaged + fixed + shipped it. All merged to `main` (`ad95d2c`, tag `gate-3`). Integrated tsc clean, 213 jest tests pass, full app bundles. Next: Phase 4 integration smoke + Arabic RTL pass + COMPLETION_REPORT.
 - 2026-06-14 — Phase 4 (integration & polish): added headless e2e integration smoke (`src/__tests__/integration.smoke.test.ts`) wiring real onboarding→engine→Money→Home-view→log through safe→survival→overspend. Static RTL/i18n audit clean (no physical left/right in styles; en/ar key parity 77=77). Final: 218 tests green, tsc clean, app bundles. Wrote `COMPLETION_REPORT.md`. MVP v1 complete. Open: manual on-device UI smoke; final app name + icons; carryover rollover still deferred.
 - 2026-06-15 — Live on-device smoke (iPhone 17 simulator). Built natively via `expo run:ios` after fixing a CocoaPods crash (shell needs `LANG=en_US.UTF-8`). Drove the real UI: onboarding (salary 3,000 → pay day 1) → Home **AED 188 "Safe"** → logged **2,800** → Home recomputed to **AED 12 "Survival mode"** (red + banner, threshold AED 20). Real expo-sqlite persistence + recompute-on-focus confirmed; figures match the engine exactly. `expo prebuild` added `ios.bundleIdentifier` + run scripts (committed; `ios/` stays gitignored). Web export unsupported (expo-sqlite `wa-sqlite.wasm`). Remaining: Arabic-RTL runtime pass.
+- 2026-06-15 — Capture architecture kickoff. Folded the three-bucket model + R8 hard rules into RULES / PATTERNS / ANTIPATTERNS / WORKING (R1 scope amended; capture is on-device only, confirm-first, Android-first). Phase C0: added `eas.json` (dev/preview/prod; dev = Android APK + iOS-simulator dev-client), `expo-dev-client` (~56.0.20), and `android.package` `com.mshafex.budgetapp`. tsc clean, 218 jest pass. PAUSED for review before C1 (recurring auto-post scheduler). Note: running an EAS dev build needs `eas login` (user's Expo account) + `eas init` to create the project id.
