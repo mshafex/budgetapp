@@ -5,6 +5,7 @@
  *  - ONBOARDING → src/app/onboarding/*
  *  - HOME       → src/app/home/*
  *  - LOGGING    → src/app/log/*
+ *  - CAPTURE    → src/app/capture/* (paste intake → confirm)
  *  - LEAD       → src/app/_layout.tsx, src/app/index.tsx (initial routing decision)
  */
 export const ROUTES = {
@@ -15,6 +16,7 @@ export const ROUTES = {
   onboardingPayday: '/onboarding/payday',
   home: '/home',
   log: '/log',
+  capture: '/capture',
 } as const;
 
 export type RouteKey = keyof typeof ROUTES;

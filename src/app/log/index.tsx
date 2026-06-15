@@ -21,6 +21,7 @@ import { ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { AmountInput, Button, CategoryPicker, ScreenContainer } from '@/components';
 import type { ExpenseCategory } from '@/contracts';
+import { ROUTES } from '@/contracts';
 import { ensureSchema, repository } from '@/db';
 import { theme } from '@/theme';
 
@@ -104,6 +105,11 @@ export default function Log() {
 
         <View style={styles.actions}>
           <Button label={t('log.save')} onPress={handleSave} disabled={saving} />
+          <Button
+            label={t('capture.title')}
+            onPress={() => router.push(ROUTES.capture)}
+            variant="secondary"
+          />
         </View>
       </ScrollView>
     </ScreenContainer>
@@ -147,5 +153,6 @@ const styles = StyleSheet.create({
   },
   actions: {
     marginTop: theme.spacing.sm,
+    gap: theme.spacing.sm,
   },
 });
