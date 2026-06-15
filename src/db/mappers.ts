@@ -12,6 +12,7 @@ import type {
   Cycle,
   Expense,
   ExpenseInput,
+  ExpenseSource,
   FixedItem,
   FixedItemInput,
   User,
@@ -50,6 +51,8 @@ export function rowToFixedItem(row: FixedItemRow): FixedItem {
     amountMinor: row.amountMinor,
     type: row.type,
     cycle: row.cycle,
+    // Nullable; absent ⇒ the Bucket-1 scheduler defaults to day 1.
+    dueDay: row.dueDay ?? null,
   };
 }
 
@@ -59,6 +62,9 @@ export function rowToExpense(row: ExpenseRow): Expense {
     amountMinor: row.amountMinor,
     category: row.category,
     note: row.note ?? null,
+    // A legacy row written before the column existed reads back null → treat as 'manual'.
+    source: row.source ?? 'manual',
+    recurringKey: row.recurringKey ?? null,
     createdAt: row.createdAt,
   };
 }
@@ -92,12 +98,16 @@ export function fixedItemToInsert(input: FixedItemInput): FixedItemInsert {
     amountMinor: input.amountMinor,
     type: input.type,
     cycle: input.cycle,
+    // Nullable; absent stays absent (scheduler defaults to day 1 when reading it back).
+    dueDay: input.dueDay ?? null,
   };
 }
 
 /**
  * Shape an expense for insert. `createdAt` is optional on the contract input;
  * `nowISO` supplies the default so the timestamp source stays injectable/testable.
+ * `source` defaults to 'manual' (Model A); `recurringKey` is null unless an auto-posted
+ * recurring item supplies one.
  */
 export function expenseToInsert(
   input: ExpenseInput,
@@ -107,6 +117,8 @@ export function expenseToInsert(
     amountMinor: input.amountMinor,
     category: input.category,
     note: input.note ?? null,
+    source: input.source ?? 'manual',
+    recurringKey: input.recurringKey ?? null,
     createdAt: input.createdAt ?? nowISO,
   };
 }
@@ -149,5 +161,33 @@ export function applyUserPatch(
 export function sumAmountsMinor(amounts: readonly number[]): number {
   let total = 0;
   for (const a of amounts) total += a;
+  return total;
+}
+
+/**
+ * Whether an expense `source` counts toward the budget's "spent this cycle" total.
+ *
+ * Model A (R8): 'recurring' postings are amortized fixed items recorded as history — they
+ * are ALREADY reflected in `disposable`, so counting them here would double-charge. A null
+ * source (legacy row written before the column existed) is treated as 'manual' and counts.
+ * The repository's `sumExpensesMinor` is the single caller; this is the one place the rule
+ * lives so it can be unit-tested without a live DB.
+ */
+export function sourceCountsTowardSpend(source: ExpenseSource | null | undefined): boolean {
+  return (source ?? 'manual') !== 'recurring';
+}
+
+/**
+ * Sum the spendable expense amounts (fils) from `{ amountMinor, source }` rows, EXCLUDING
+ * `source = 'recurring'` (Model A). Integer-only (R3). Pure, so the exclusion semantics are
+ * testable without the native DB.
+ */
+export function sumSpendableMinor(
+  rows: readonly { amountMinor: number; source: ExpenseSource | null }[],
+): number {
+  let total = 0;
+  for (const row of rows) {
+    if (sourceCountsTowardSpend(row.source)) total += row.amountMinor;
+  }
   return total;
 }

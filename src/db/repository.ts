@@ -1,9 +1,10 @@
 /**
  * Repository implementation — the ONLY data access surface (PATTERNS: no raw queries
- * in screens/engine). Implements `@/contracts` `Repository` exactly.
+ * in screens/engine). Implements the frozen `@/contracts` `Repository` plus the additive
+ * Bucket-1 methods (`RecurringRepository`, defined below — the contract is not edited).
  *
  * R2/R5: backed by local SQLite (single source of truth, offline-first).
- * R3: every amount is integer fils; arithmetic stays integer (see `sumAmountsMinor`).
+ * R3: every amount is integer fils; arithmetic stays integer (see `sumSpendableMinor`).
  *
  * `createRepository` is a factory over the (sync, native) drizzle handle so wiring is
  * explicit and the impl is decoupled from the singleton. The expo-sqlite driver runs
@@ -20,7 +21,8 @@ import type {
   User,
   UserInput,
 } from '@/contracts';
-import { and, asc, eq, gte, lt } from 'drizzle-orm';
+import { computeDuePostings } from '@/engine';
+import { and, asc, eq, gte, isNotNull, lt } from 'drizzle-orm';
 import type { Database } from './client';
 import { cycleTable, expenseTable, fixedItemTable, userTable } from './schema';
 import {
@@ -32,11 +34,31 @@ import {
   rowToExpense,
   rowToFixedItem,
   rowToUser,
-  sumAmountsMinor,
+  sumSpendableMinor,
   userToInsert,
 } from './mappers';
 
-export function createRepository(db: Database): Repository {
+/**
+ * The `Repository` contract (frozen, LEAD-owned) plus the Bucket-1 recurring auto-post
+ * surface. These two methods are additive — they extend the contract without editing it,
+ * so contract consumers are unaffected and the factory stays type-checked.
+ */
+export interface RecurringRepository extends Repository {
+  /**
+   * `recurringKey`s of already-posted recurring expenses whose `createdAt` (the due date)
+   * is in `[fromISO, toISO)` — feeds `computeDuePostings`' idempotency check.
+   */
+  listPostedRecurringKeys(fromISO: string, toISO: string): Promise<string[]>;
+  /**
+   * Post every recurring fixed item due in `[cycleStart, min(today, cycleEnd)]` that hasn't
+   * been posted yet (Model A, source='recurring'). Pure scheduling is delegated to
+   * `computeDuePostings`; this only reads the inputs and inserts the result. Idempotent —
+   * returns the number of NEW postings inserted (0 on a re-run with nothing newly due).
+   */
+  postDueRecurring(today: string, cycleStart: string, cycleEnd: string): Promise<number>;
+}
+
+export function createRepository(db: Database): RecurringRepository {
   return {
     /* --- User (single-row profile) --------------------------------- */
 
@@ -124,14 +146,64 @@ export function createRepository(db: Database): Repository {
       return rows.map(rowToExpense);
     },
 
-    /** Sum of expense amounts (fils) with createdAt in [fromISO, toISO). */
+    /**
+     * Sum of expense amounts (fils) with createdAt in [fromISO, toISO), EXCLUDING
+     * `source = 'recurring'`. Recurring postings are amortized fixed items recorded as
+     * history (Model A); counting them here would double-charge against `disposable`.
+     * 'manual' and 'captured' are included. The exclusion rule lives in the pure
+     * `sumSpendableMinor` helper (unit-tested) so it stays in one place.
+     */
     async sumExpensesMinor(fromISO: string, toISO: string): Promise<number> {
       const rows = db
-        .select({ amountMinor: expenseTable.amountMinor })
+        .select({ amountMinor: expenseTable.amountMinor, source: expenseTable.source })
         .from(expenseTable)
         .where(createdAtInRange(fromISO, toISO))
         .all();
-      return sumAmountsMinor(rows.map((r) => r.amountMinor));
+      return sumSpendableMinor(rows);
+    },
+
+    /* --- Recurring auto-post (Bucket 1) ---------------------------- */
+
+    async listPostedRecurringKeys(fromISO: string, toISO: string): Promise<string[]> {
+      return selectPostedRecurringKeys(db, fromISO, toISO);
+    },
+
+    async postDueRecurring(
+      today: string,
+      cycleStart: string,
+      cycleEnd: string,
+    ): Promise<number> {
+      // 1. Read the inputs the PURE scheduler needs.
+      const fixedItems = db
+        .select()
+        .from(fixedItemTable)
+        .orderBy(asc(fixedItemTable.id))
+        .all()
+        .map(rowToFixedItem);
+
+      // Posted keys are dated by their due date (createdAt); the scheduler only proposes
+      // due dates inside [cycleStart, min(today, cycleEnd)], so scanning [cycleStart, cycleEnd)
+      // covers every key that could collide. Same query as listPostedRecurringKeys (one rule).
+      const postedKeys = selectPostedRecurringKeys(db, cycleStart, cycleEnd);
+
+      // 2. Pure scheduling — no I/O inside computeDuePostings.
+      const duePostings = computeDuePostings({
+        fixedItems,
+        today,
+        cycleStart,
+        cycleEnd,
+        postedKeys,
+      });
+      if (duePostings.length === 0) {
+        return 0;
+      }
+
+      // 3. Insert the new postings. createdAt is the due date the scheduler set, so the
+      // posting falls in the cycle it belongs to — expenseToInsert preserves it.
+      for (const posting of duePostings) {
+        db.insert(expenseTable).values(expenseToInsert(posting)).run();
+      }
+      return duePostings.length;
     },
 
     /* --- Cycle cache (single derived row) -------------------------- */
@@ -160,6 +232,28 @@ export function createRepository(db: Database): Repository {
 /** Half-open `createdAt ∈ [fromISO, toISO)` predicate. Single source of the range semantics. */
 function createdAtInRange(fromISO: string, toISO: string) {
   return and(gte(expenseTable.createdAt, fromISO), lt(expenseTable.createdAt, toISO));
+}
+
+/**
+ * The recurringKeys already posted in [fromISO, toISO) — the single query behind both
+ * `listPostedRecurringKeys` and `postDueRecurring`'s idempotency read (one place for the
+ * rule, and `this`-free so a destructured method call can't break it). Synchronous, like the
+ * rest of the expo-sqlite access; the public methods wrap it to satisfy the async contract.
+ */
+function selectPostedRecurringKeys(db: Database, fromISO: string, toISO: string): string[] {
+  const rows = db
+    .select({ recurringKey: expenseTable.recurringKey })
+    .from(expenseTable)
+    .where(
+      and(
+        eq(expenseTable.source, 'recurring'),
+        isNotNull(expenseTable.recurringKey),
+        createdAtInRange(fromISO, toISO),
+      ),
+    )
+    .all();
+  // The isNotNull predicate guarantees a string; the filter narrows the type for TS.
+  return rows.map((r) => r.recurringKey).filter((k): k is string => k !== null);
 }
 
 /**

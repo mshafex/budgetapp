@@ -30,7 +30,9 @@ import {
   rowToExpense,
   rowToFixedItem,
   rowToUser,
+  sourceCountsTowardSpend,
   sumAmountsMinor,
+  sumSpendableMinor,
   userToInsert,
 } from '../mappers';
 
@@ -53,6 +55,7 @@ const fixedItemRow: FixedItemRow = {
   amountMinor: 200000,
   type: 'rent',
   cycle: 'monthly',
+  dueDay: 1,
 };
 
 const expenseRow: ExpenseRow = {
@@ -60,6 +63,8 @@ const expenseRow: ExpenseRow = {
   amountMinor: 1550,
   category: 'food',
   note: 'lunch',
+  source: 'manual',
+  recurringKey: null,
   createdAt: '2026-06-14T09:30:00.000Z',
 };
 
@@ -103,6 +108,7 @@ describe('rowToFixedItem', () => {
       amountMinor: 200000,
       type: 'rent',
       cycle: 'monthly',
+      dueDay: 1,
     });
   });
 
@@ -114,6 +120,16 @@ describe('rowToFixedItem', () => {
     });
     expect(item.type).toBe('remittance');
   });
+
+  it('round-trips a non-default dueDay', () => {
+    const item = rowToFixedItem({ ...fixedItemRow, dueDay: 25 });
+    expect(item.dueDay).toBe(25);
+  });
+
+  it('normalizes a null dueDay to null (scheduler then defaults to day 1)', () => {
+    const item = rowToFixedItem({ ...fixedItemRow, dueDay: null });
+    expect(item.dueDay).toBeNull();
+  });
 });
 
 describe('rowToExpense', () => {
@@ -124,6 +140,8 @@ describe('rowToExpense', () => {
       amountMinor: 1550,
       category: 'food',
       note: 'lunch',
+      source: 'manual',
+      recurringKey: null,
       createdAt: '2026-06-14T09:30:00.000Z',
     });
   });
@@ -131,6 +149,30 @@ describe('rowToExpense', () => {
   it('normalizes a null note to null', () => {
     const expense = rowToExpense({ ...expenseRow, note: null });
     expect(expense.note).toBeNull();
+  });
+
+  it('round-trips a recurring source + recurringKey', () => {
+    const expense = rowToExpense({
+      ...expenseRow,
+      source: 'recurring',
+      recurringKey: '7:2026-06-01',
+    });
+    expect(expense.source).toBe('recurring');
+    expect(expense.recurringKey).toBe('7:2026-06-01');
+  });
+
+  it('round-trips a captured source', () => {
+    const expense = rowToExpense({ ...expenseRow, source: 'captured' });
+    expect(expense.source).toBe('captured');
+  });
+
+  it('treats a legacy null source as manual (column added by migration)', () => {
+    // A row written before the `source` column existed reads back null.
+    const expense = rowToExpense({
+      ...expenseRow,
+      source: null as unknown as ExpenseRow['source'],
+    });
+    expect(expense.source).toBe('manual');
   });
 });
 
@@ -177,10 +219,22 @@ describe('fixedItemToInsert', () => {
       amountMinor: 90000,
       type: 'loan',
       cycle: 'monthly',
+      dueDay: 10,
     };
     const insert = fixedItemToInsert(input);
     expect(insert).toEqual(input);
     expect(insert).not.toHaveProperty('id');
+  });
+
+  it('defaults an absent dueDay to null', () => {
+    const input: FixedItemInput = {
+      label: 'Rent',
+      amountMinor: 200000,
+      type: 'rent',
+      cycle: 'monthly',
+    };
+    const insert = fixedItemToInsert(input);
+    expect(insert.dueDay).toBeNull();
   });
 });
 
@@ -209,6 +263,28 @@ describe('expenseToInsert', () => {
     const input: ExpenseInput = { amountMinor: 800, category: 'food', note: null };
     const insert = expenseToInsert(input, '2026-06-14T12:00:00.000Z');
     expect(insert.note).toBeNull();
+  });
+
+  it('defaults source to manual and recurringKey to null when absent (Model A)', () => {
+    const input: ExpenseInput = { amountMinor: 800, category: 'food', note: null };
+    const insert = expenseToInsert(input, '2026-06-14T12:00:00.000Z');
+    expect(insert.source).toBe('manual');
+    expect(insert.recurringKey).toBeNull();
+  });
+
+  it('persists an explicit recurring source + recurringKey (auto-post path)', () => {
+    const input: ExpenseInput = {
+      amountMinor: 200000,
+      category: 'bills',
+      note: 'Rent',
+      source: 'recurring',
+      recurringKey: '1:2026-06-01',
+      createdAt: '2026-06-01',
+    };
+    const insert = expenseToInsert(input);
+    expect(insert.source).toBe('recurring');
+    expect(insert.recurringKey).toBe('1:2026-06-01');
+    expect(insert.createdAt).toBe('2026-06-01');
   });
 
   it('produces a valid ISO timestamp when no nowISO is supplied', () => {
@@ -303,5 +379,63 @@ describe('sumAmountsMinor', () => {
 
   it('handles negative amounts (e.g. a negative carryover contribution)', () => {
     expect(sumAmountsMinor([5000, -1200, 300])).toBe(4100);
+  });
+});
+
+/* ------------------------------------------------------------------ */
+/* sourceCountsTowardSpend  (Model A spend-sum exclusion rule)         */
+/* ------------------------------------------------------------------ */
+
+describe('sourceCountsTowardSpend', () => {
+  it('excludes recurring (amortized fixed items are already in disposable)', () => {
+    expect(sourceCountsTowardSpend('recurring')).toBe(false);
+  });
+
+  it('includes manual and captured', () => {
+    expect(sourceCountsTowardSpend('manual')).toBe(true);
+    expect(sourceCountsTowardSpend('captured')).toBe(true);
+  });
+
+  it('treats null/undefined (legacy row) as manual → counts', () => {
+    expect(sourceCountsTowardSpend(null)).toBe(true);
+    expect(sourceCountsTowardSpend(undefined)).toBe(true);
+  });
+});
+
+/* ------------------------------------------------------------------ */
+/* sumSpendableMinor                                                   */
+/* ------------------------------------------------------------------ */
+
+describe('sumSpendableMinor', () => {
+  it('excludes recurring rows but includes manual and captured', () => {
+    const total = sumSpendableMinor([
+      { amountMinor: 1550, source: 'manual' }, // counts
+      { amountMinor: 2500, source: 'captured' }, // counts
+      { amountMinor: 200000, source: 'recurring' }, // EXCLUDED (rent auto-post)
+      { amountMinor: 800, source: 'manual' }, // counts
+    ]);
+    expect(total).toBe(1550 + 2500 + 800);
+  });
+
+  it('counts a legacy null source as spend (manual)', () => {
+    const total = sumSpendableMinor([
+      { amountMinor: 1000, source: null },
+      { amountMinor: 200000, source: 'recurring' },
+    ]);
+    expect(total).toBe(1000);
+  });
+
+  it('returns 0 for an all-recurring set', () => {
+    const total = sumSpendableMinor([
+      { amountMinor: 200000, source: 'recurring' },
+      { amountMinor: 50000, source: 'recurring' },
+    ]);
+    expect(total).toBe(0);
+  });
+
+  it('returns 0 for an empty list and keeps the result an exact integer', () => {
+    const out = sumSpendableMinor([]);
+    expect(out).toBe(0);
+    expect(Number.isInteger(out)).toBe(true);
   });
 });
