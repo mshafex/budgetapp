@@ -12,6 +12,7 @@
       "bundleIdentifier": "com.mshafex.budgetapp"
     },
     "android": {
+      "package": "com.mshafex.budgetapp",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
