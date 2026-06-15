@@ -6,15 +6,17 @@
 
 ## Status
 ✅ MVP v1 complete (218 jest tests, tsc clean, verified live on iPhone 17 sim).
-🟡 Now building the **transaction-capture architecture** (three-bucket model, Android-first —
-see PATTERNS.md + RULES R8). At capture Phase C0 (EAS dev-build + Android config); pausing for
-review before feature work.
+🟡 Building the **transaction-capture architecture** (three-bucket, Android-first). Done: C0
+(EAS/Android), C1 (recurring auto-post, Model A — PR #7), C3 (pure parser — PR #8); merged to
+`main`, tsc clean, **324 jest tests**. Next: native feeds C4→C5→C6 (each needs an EAS dev build
++ on-device test — stub-then-handoff).
 
 ## Current focus
-Capture Phase C0 (serial, lead): add EAS dev-build config (`eas.json` + `expo-dev-client`) and
-the Android package id; verify tsc/jest still green; commit; PAUSE for review. Then C1 = the
-recurring auto-post scheduler (pure engine, tested). Carry-over from MVP: Arabic-RTL runtime
-pass + final app name/icons still open (see `COMPLETION_REPORT.md`).
+Capture C4 — share-sheet / paste intake (Bucket 2, feed 1). Build the buildable + testable
+parts here (config plugin + `CaptureSource` impl + mockable stub + the candidate **confirm**
+flow, which is pure RN), then STOP and hand over exact on-device test steps (needs an EAS dev
+build on the user's Expo account — can't be auto-verified, R8). Carry-over from MVP still open:
+Arabic-RTL runtime pass + final app name/icons (see `COMPLETION_REPORT.md`).
 
 ## Task checklist
 
@@ -39,9 +41,9 @@ pass + final app name/icons still open (see `COMPLETION_REPORT.md`).
 
 ### Capture architecture (v1.x) — three-bucket model (RULES R8, PATTERNS)
 *(Phase numbers mirror the prompt: phase 2 = core screens, already done above.)*
-- [ ] **C0** EAS dev-build config (`eas.json`, `expo-dev-client`) + Android package id — in progress; pause after
-- [ ] **C1** Bucket 1: recurring auto-post scheduler in the engine (pure) + tests (due-in-past / today / missed-periods / cycle-boundary, idempotent)
-- [ ] **C3** Bucket 2 core: pure transaction-parser + per-source templates + tests (NO platform code)
+- [x] **C0** EAS dev-build config (`eas.json`, `expo-dev-client`) + Android package id (commit 059662d)
+- [x] **C1** Bucket 1: recurring auto-post scheduler (pure, Model A; idempotent; +48 tests) — PR #7; trigger wired in `src/app/index.tsx`
+- [x] **C3** Bucket 2 core: pure transaction-parser + per-source UAE templates (+58 tests) — PR #8
 - [ ] **C4** Bucket 2 feed 1: share-sheet / paste intake → parser → confirm flow (both platforms)
 - [ ] **C5** Bucket 2 feed 2: on-device OCR receipt scan → parser → confirm flow (ML Kit / Vision)
 - [ ] **C6** Bucket 2 feed 3: notification listener (Android-only, feature-flagged, LAST) → parser → confirm flow
@@ -91,4 +93,5 @@ pass + final app name/icons still open (see `COMPLETION_REPORT.md`).
 - 2026-06-14 — Phase 3: lead seeded route skeleton (`6481429`), then 3 worktree workers → PRs #4 (log), #5 (home), #6 (onboarding). Onboarding worker stalled post-review; lead salvaged + fixed + shipped it. All merged to `main` (`ad95d2c`, tag `gate-3`). Integrated tsc clean, 213 jest tests pass, full app bundles. Next: Phase 4 integration smoke + Arabic RTL pass + COMPLETION_REPORT.
 - 2026-06-14 — Phase 4 (integration & polish): added headless e2e integration smoke (`src/__tests__/integration.smoke.test.ts`) wiring real onboarding→engine→Money→Home-view→log through safe→survival→overspend. Static RTL/i18n audit clean (no physical left/right in styles; en/ar key parity 77=77). Final: 218 tests green, tsc clean, app bundles. Wrote `COMPLETION_REPORT.md`. MVP v1 complete. Open: manual on-device UI smoke; final app name + icons; carryover rollover still deferred.
 - 2026-06-15 — Live on-device smoke (iPhone 17 simulator). Built natively via `expo run:ios` after fixing a CocoaPods crash (shell needs `LANG=en_US.UTF-8`). Drove the real UI: onboarding (salary 3,000 → pay day 1) → Home **AED 188 "Safe"** → logged **2,800** → Home recomputed to **AED 12 "Survival mode"** (red + banner, threshold AED 20). Real expo-sqlite persistence + recompute-on-focus confirmed; figures match the engine exactly. `expo prebuild` added `ios.bundleIdentifier` + run scripts (committed; `ios/` stays gitignored). Web export unsupported (expo-sqlite `wa-sqlite.wasm`). Remaining: Arabic-RTL runtime pass.
+- 2026-06-15 — Capture C1 + C3 (pure phases) via 2 parallel worktree PRs. C1 (PR #7): recurring auto-post scheduler — Model A (amortize kept, `computeBudget` untouched; postings tagged `source='recurring'`, excluded from spend; idempotent UTC; +48 tests). C3 (PR #8): pure transaction parser + UAE bank templates (+58 tests; a ReDoS was caught + fixed in review). Merged to `main` (`5fd0f17`). Lead wired `postDueRecurring` at app start (`src/app/index.tsx`). Integrated tsc clean, 324 jest pass. Note: C1's 2 new repo methods are exposed via `RecurringRepository extends Repository` (frozen contract not edited — fold in later if wanted). Next: C4 share-sheet (native — stub + device handoff).
 - 2026-06-15 — Capture architecture kickoff. Folded the three-bucket model + R8 hard rules into RULES / PATTERNS / ANTIPATTERNS / WORKING (R1 scope amended; capture is on-device only, confirm-first, Android-first). Phase C0: added `eas.json` (dev/preview/prod; dev = Android APK + iOS-simulator dev-client), `expo-dev-client` (~56.0.20), and `android.package` `com.mshafex.budgetapp`. tsc clean, 218 jest pass. PAUSED for review before C1 (recurring auto-post scheduler). Note: running an EAS dev build needs `eas login` (user's Expo account) + `eas init` to create the project id.
