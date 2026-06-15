@@ -81,7 +81,8 @@ pass + final app name/icons still open (see `COMPLETION_REPORT.md`).
 - Survival threshold: user-set vs sensible default? (default for v1, revisit.)
 - Remote/PRs: `gh` CLI not installed; needs auth as personal `mshafex` (device login or PAT) before repo creation + PR fan-out. SSH push as `mshafex` already verified working. (gh now installed + authed as mshafex; resolved.)
 - EAS dev build needs the user's Expo account (`eas login`) to run cloud builds. Phase C0 only writes config (`eas.json` + dev-client dep); actually building/installing a dev client on a device is the user's step.
-- Recurring auto-post (C1): does an auto-posted recurring item need user confirm, or only Bucket-2 *parsed* candidates? Assumption: recurring items were user-entered once → they auto-post WITHOUT re-confirm; only Bucket-2 captures use confirm-don't-assume. Flag for review.
+- Recurring auto-post (C1): RESOLVED 2026-06-15 — recurring items auto-post WITHOUT re-confirm (user-authored once); confirm-don't-assume applies only to Bucket-2 *parsed* candidates.
+- Number model: RESOLVED 2026-06-15 — **keep Model A (amortize)**. Recurring items stay amortized into disposable (stable, pre-reserves rent — the tested/demoed number). C1 auto-posts them as `source='recurring'` expense records (history + no manual re-entry), and the spend sum EXCLUDES `source='recurring'` so they never double-count. Cash-flow/ledger model (B) rejected for v1 (tempts overspend before bills hit). Salary-as-income-record deferred.
 
 ## Session log
 *(Append one entry per session: date — what changed — what's next.)*

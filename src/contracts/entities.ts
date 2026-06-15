@@ -23,6 +23,9 @@ export type ExpenseCategory =
   | 'family'
   | 'other';
 
+/** How an expense entered the ledger. Absent ⇒ treated as 'manual'. */
+export type ExpenseSource = 'manual' | 'recurring' | 'captured';
+
 export interface User {
   id: number;
   /** Monthly salary, fils. */
@@ -43,6 +46,8 @@ export interface FixedItem {
   amountMinor: number;
   type: FixedItemType;
   cycle: CycleKind;
+  /** Day-of-month the item is due (1..31), used by the Bucket-1 auto-post scheduler. Absent ⇒ day 1. */
+  dueDay?: number | null;
 }
 
 export interface Expense {
@@ -50,6 +55,14 @@ export interface Expense {
   amountMinor: number;
   category: ExpenseCategory;
   note: string | null;
+  /**
+   * How this expense was created. Absent ⇒ 'manual'. The budget spend sum EXCLUDES
+   * 'recurring' (those are amortized fixed items auto-posted as records — Model A, R8),
+   * and INCLUDES 'manual' and 'captured'.
+   */
+  source?: ExpenseSource;
+  /** Idempotency key for auto-posted recurring items: `${fixedItemId}:${dueDateISO}`. Else null. */
+  recurringKey?: string | null;
   /** ISO 8601 timestamp. */
   createdAt: string;
 }
